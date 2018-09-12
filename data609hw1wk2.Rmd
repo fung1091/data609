@@ -1,0 +1,96 @@
+---
+title: "data609hw1wk2"
+author: "jim lung"
+date: "September 7, 2018"
+output: html_document
+---
+
+__Page 69__ 
+
+Identify a problem worth studying and list the variables that affect the behavior you have identified. Which variables would be neglected completely? Which might be considered as constants initially? Can you identify any submodels you would want to study in detail? Identify any data you would want collected.
+
+12) A company with a fleet of trucks faces increasing maintenance costs as the age and mileage of the trucks increase.
+
+A problem worth studying is looking at how the cost of mainting a truck fluctuates over the life of a truck. Variables that should be part of the model are: Truck Model, Age, MPG, maintenance cost, part needing replacing. I would ignore average speed of the trucks because of the difficultly to accurately record. A good constant would be the model of the truck. A submodel that would be good is to look at how maintenance costs are tied to the type of weather that the types of trucks endure. Data I would want to collect is maintenance cost, parts replaced, age, mileage, and MPG for the the past 25 years.
+
+__Page 79__ 
+ 
+ Determine if the data set supports the stated proportionality model.
+ 
+ 11) $y alpha x^3$
+ 
+```{r, tidy=TRUE}
+library(ggplot2)
+
+y <- c(0,1,2,6,14,24,37,58,82,114)
+x <- c(1,2,3,4,5,6,7,8,9,10)
+x3 <- x^3
+k <- y / x3
+prop <- x3 * k
+mk <- median(k)
+propm <-  mk * x3
+data <- data.frame(x,y,x3,k,prop,propm)
+knitr::kable(data)
+
+f1 <- ggplot(data) + geom_line(aes(x=x, y=y)) + geom_line(aes(x=x, y=propm), colour="blue") + labs(title="Proportionality, Blue = model")
+f1
+```
+
+
+__Page 94__ 
+
+4) Lumber cutters wish to use readily available measurments to estimate the number of board feet of lumber in a tree. Assume they measure the diameter of the tree in inches at waist height. Develop a model that predicts board feet as a function of diameter in inches. The variable x is the diameter of a ponderosa pine in inches and y is the number of board feet divided by 10.
+
+```{r}
+x <- c(17,19,20,23,25,28,32,38,39,41)
+y <- c(19,25,32,57,71,113,123,252,259,294)
+```
+
+Board feet = 12 x 12 x 1
+
+
+a. Consider two seaparate assumptions allowing each to lead to a model. Completely analyze each model.
+i. Assume that all trees are right-circular cylinders and are approximately the same height
+
+\[V = \pi r^2 h\] and the ratio of heights are close to 1 since we assume that all trees are approximately the same height. So as a result r1/r2 != k. K is going to be approximately 1. So the model might look like \[V = k(d/2)^2\].
+
+```{r}
+V <- y * 10 * 144 #144 is board
+dh2 <- (x * 0.5)^2
+df1 <- data.frame(x,y,dh2,V)
+k <- V[10] / dh2[10]
+k
+V3 <- k * dh2
+Vf <- V3 / 144
+df2 <- cbind(df1, V3, Vf)
+
+
+#Model vs data
+f1 <- ggplot(df2) + geom_point(aes(x=x, y=y)) + geom_line(aes(x=x, y=Vf / 10)) 
+f1
+```
+
+ii. Assume that all trees are right-circular cylinders and that the height of the tree is proportional to the diameter.
+
+If height is proportional to the diameter, taller trees have larger diameters and vice versa. Geometric similarity is at play in this case because ratio of diameters would equal the ratio of the heights. So Volume would be equal to ratio x diameter cubed.
+
+\[V = kd^3\]
+
+```{r}
+y3 <- y * 10 * 144
+x3 <- x ^ 3
+df <- data.frame(x, y, x3, y3)
+k <- y3[10] / x3[10]
+k
+in3 <- k * x3
+Vf <- in3 / 144
+df <- cbind(df, in3, Vf)
+
+#Model vs data
+f2 <- ggplot(df) + geom_point(aes(x=x, y=y)) + geom_line(aes(x=x, y=Vf / 10)) 
+f2
+```
+
+b. Which model appears to be better? Why?
+
+The second model is better because it fits the points better.
