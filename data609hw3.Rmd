@@ -1,0 +1,99 @@
+---
+title: "data609hw3"
+author: "jim lung"
+date: "September 15, 2018"
+output: html_document
+---
+
+__113__
+
+2) The following table gives the elongation $e$ in inches per inch (in./in.) for a given stress S on a streel wire measured in pounds per square inch ($lb/in^2$). Test the model $e=c1S$ by potting the data. Estimate $c1$ graphically.
+
+
+```{r}
+library(ggplot2)
+```
+
+
+```{r}
+S <- c(5, seq(10, 100, 10))
+e <- c(0, 19, 57, 94, 134, 173, 216, 256, 297, 343, 390)
+
+qplot(x = S, y = e)
+```
+
+Looks like a straight line. At about y = 100 it should be at about x = 30, so the slope linear model has a slope of about 3. 
+
+__121__
+
+2a) For each of the following data sets, formulate the mathematical model that minimizes the largest deviation between the data and the line y = ax+b. If a computer is available, solve for the estimates of a and b.
+
+```{r, tidy=TRUE}
+x <- c(1.0,2.3,3.7,4.2,6.1,7.0)
+y <- c(3.6,3.0,3.2,5.1,5.3,6.8)
+
+df <- data.frame(x,y)
+
+lm <- lm(y ~ x, df)
+lm$coefficients
+
+f3 <- ggplot(data=df) + geom_point(aes(x=x, y=y)) + geom_abline(intercept= 2.214853, slope=0.5642337)
+f3
+```
+
+
+__127__
+
+10) Fit the data with the models given using least squares. Data for planets. Fit the model $y=ax^(3/2)$
+
+```{r}
+body <- c("Mercury", "Venus", "Earth", "Mars", 
+          "Jupiter", "Saturn", "Uranus", "Neptune")
+period <- c(7.6 * 10^6, 1.94 * 10^7, 3.16 * 10^7, 
+            5.94 * 10^7, 3.74 * 10^8, 9.35 * 10^8, 
+            2.64 * 10^9, 5.22 * 10^9)
+distance <- c(5.79 * 10^10, 1.08 * 10^11, 1.5 * 10^11, 
+              2.28 * 10^11, 7.79 * 10^11, 1.43 * 10^12, 
+              2.87 * 10^12, 4.5 * 10^12)
+df <- data.frame(body, period, distance)
+df
+```
+
+Least-squares equation for power curve where $n=3/2$, x=period and y=distance.
+
+```{r}
+n <- 3/2
+
+model <- function (x, y, n)
+{
+  numerator <- sum(y * x^n)
+  denominator <- sum(x^(2*n))
+  print(numerator)
+  print(denominator)
+  result <- numerator / denominator
+  return (result)
+}
+
+a <- model(df$period, df$distance, n)
+a
+
+planet <- function(a, x, n)
+{
+  yestimate <- a * (x^(n))
+  return(yestimate)
+}
+
+x_vals <- seq(min(df$period), max(df$period), by=100000)
+y_mest <- planet(a, x_vals, n)
+dfplanet<- data.frame(x_vals, y_mest)
+
+```
+
+Original data points and the model plotted.
+
+```{r}
+f4 <- ggplot(df) + geom_point(aes(x=period, y=distance)) + geom_line(data=dfplanet, aes(x=x_vals, y=y_mest)) 
+f4
+```
+
+Squared deviations may be minimized, but the model does not do a good job representing the data.
