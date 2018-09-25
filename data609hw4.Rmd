@@ -1,0 +1,248 @@
+---
+title: "data609hw4"
+author: "jim lung"
+date: "September 21, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE, fig.align='center')
+```
+
+## Section 5.1, Problem 3
+Creating the Monte Carlo method with $n = 5000$ points, the following simulation is created using the uniform distribution for generating $x$ and $y$ values:
+```{r s51p3}
+n <- 5000  # number of simulations
+Q <- 0     # counter for number in circle
+
+for (i in 1:n) {
+  # generate random numbers
+  x <- runif(1, 0, 1)
+  y <- runif(1, 0, 1)
+  # if inside cirlce; increment
+  if (x^2 + y^2 <= 1) {
+    Q <- Q + 1
+  }
+}
+
+# calculate ratio of areas
+ratio <- Q / n
+# estimate pi
+pi_est <- ratio * 4
+```
+
+The estimated value produced by the simulation is $\pi \approx `r round(pi_est, 4)`$.
+
+\newpage
+## Section 5.2, Problem 1
+A function is written to generate the numbers using the middle-square method:
+```{r s52p1}
+mid_sq <- function(seed, n) {
+  # start sequence with seed
+  gen <- seed
+  # get length of seed
+  len <- nchar(as.character(seed))
+  # determine which digits to grab from squared numbers
+  dig_start <- (2 * len) / 4 + 1
+  dig_end   <- 3 * (2 * len) / 4
+  for (i in 1:n) {
+    # square last number generated
+    new_gen <- gen[length(gen)]^2
+    # convert new number to string to subset
+    new_gen <- as.character(new_gen)
+    # ensure number is of proper length
+    lead_zero <- len * 2 - nchar(new_gen)
+    new_gen <- paste0(paste(rep('0', lead_zero), collapse = ''), new_gen)
+    # get middle digits
+    new_gen <- substr(new_gen, dig_start, dig_end)
+    # add new number to array of generated numbers
+    gen <- c(gen, as.numeric(new_gen))
+  }
+  gen
+}
+```
+
+```{r s52p1-ans, echo=FALSE}
+library(pander)
+pa <- mid_sq(1009, 10)
+pb <- mid_sq(653217, 20)
+pc <- mid_sq(3043, 15)
+pander(data.frame(a = c(pa, rep("", 10)), b = pb, c = c(pc, rep("", 5)), row.names = 0:20))
+```
+
+Random sequence a rapidly degenerates to zero.  Sequence b exhibits degeneration, but it is far less rapid than part a.  Sequence c exhibits cycling beginning with the fourth number generated.
+
+\newpage
+## Section 5.3, Problem 4
+The total of the two dice is simulated by running a Monte Carlo simulation for each weighted die:
+```{r s51p4-probs}
+# load probabilities
+die_1 <- c(0.1, 0.1, 0.2, 0.3, 0.2, 0.1)
+die_2 <- c(0.3, 0.1, 0.2, 0.1, 0.05, 0.25)
+# convert to cumulative probabilities
+die_1 <- cumsum(die_1)
+die_2 <- cumsum(die_2)
+
+# set up container for sums
+tot <- numeric()
+
+for (i in 1:300) {
+  # generate two random numbers
+  d1 <- runif(1)
+  d2 <- runif(1)
+  # get rolls associated with values
+  d1 <- min(which(d1 < die_1))
+  d2 <- min(which(d2 < die_2))
+  # add sum to set of sums
+  tot <- c(tot, d1 + d2)
+}
+```
+
+The count of observation by sum is below:
+```{r s53p4-tbl, echo=FALSE}
+tot_cnt <- data.frame(unname(table(tot)))$Freq
+pander(data.frame(Sum = 2:12, Count = tot_cnt, Proportion = tot_cnt/300))
+```
+
+
+
+\newpage
+## Section 5.3, Project 4
+To generate the probabilities for the Monte Carlo simulation, the provided odds must be converted to probabilies:
+$$n:1 \ \ \textrm{odds} \implies \ \frac{1}{n+1} \ \ \textrm{probability}$$
+
+The sum of the individual probabilities do not add up to exactly 1, so each probability is divided by the sum of the probabilities to give the adjusted probability.
+
+```{r s53p4-odds}
+odds <- c(7, 5, 9, 12, 4, 35, 15, 4)
+prob <- 1 / (odds + 1)
+prob.adj <- prob / (sum(prob))
+```
+
+```{r s53p4-prob, echo=FALSE}
+horses <- c("Euler's Folly", "Leapin' Leibniz", "Newton Lobell", "Count Cauchy",
+            "Pumped up Poisson", "Loping L'Hopital", "Steaming' Stokes", "Dancin' Dantzig")
+pander(data.frame(Probability = prob, `Adjusted Probability` = prob.adj, row.names = horses))
+```
+
+These adjusted probabilites are used to create the simulation:
+```{r s53p4-sim}
+# set up counter for wins
+wins <- rep(0, length(prob.adj))
+# get cumulative distribution
+cum_prob <- cumsum(prob.adj)
+# run simulation
+for (i in 1:1000) {
+  # generate random number
+  w <- runif(1)
+  # determine winning horse
+  w <- min(which(w < cum_prob))
+  # increment horse's winnings
+  wins[w] <- wins[w] + 1
+}
+```
+
+```{r s53p4-wins, echo=FALSE}
+pander(data.frame(Wins = wins, row.names = horses))
+```
+
+The horse with the most wins was `r horses[which(wins == max(wins))]` -- this is unsurprising, as it was tied for the best odds (4:1).  `r horses[which(wins == min(wins))]` had the fewest wins --  this too is unsurprising, since it had the worst odds (35:1).
+
+\newpage
+## Section 5.4, Problem 3
+Assuming that the lag can only take the discrete values given (i.e. a minimum of 2 days, maximum of 7, and no half days), the simulation can be set up as follows:
+```{r s54p3}
+lag_count <- c(10, 25, 30, 20, 13, 2)
+# calculate cumulative probabilities
+lag_prob <- cumsum(lag_count / 100)
+# set up counter for lags
+lag_days <- rep(0, length(lag_count))
+# run simulation
+for (i in 1:1000) {
+  # generate random number
+  l <- runif(1)
+  # determine lag duration based on number
+  l <- min(which(l < lag_prob))
+  # increment lag count
+  lag_days[l] <- lag_days[l] + 1
+}
+```
+
+```{r s54p3-tbl, echo=FALSE}
+pander(data.frame(`Lag time` = 2:7, Occurences = lag_days, check.names = FALSE))
+```
+
+Based on the observed occurences, the simulation results align with what would be expected.
+
+\newpage
+## Section 5.5, Problem 2
+Table 5.18 contains two subtables -- one for arrivals, and one for service times.  Using the midpoints of each interval:
+```{r s55p2-data}
+arrival <- data.frame(
+  times = c(19.5, 29.5, 39.5, 49.5, 59.5, 69.5, 79.5, 89.5, 99.5, 109.5, 119.5, 129.5, 140),
+  probs = c(0.009, 0.029, 0.035, 0.051, 0.09, 0.161, 0.2, 0.172, 0.125, 0.071, 0.037, 0.017, 0.003)
+)
+
+service <- data.frame(
+  times = c(47, 52, 57, 62, 67, 72, 77, 82, 87.5),
+  probs = c(0.017, 0.045, 0.095, 0.086, 0.13, 0.185, 0.208, 0.143, 0.091)
+)
+
+# convert to cumulative probabilities
+arrival$probs <- cumsum(arrival$probs)
+service$probs <- cumsum(service$probs)
+```
+
+To establish a smooth polynomial function, plots of times vs. probabilities are created for each set of observations:
+
+```{r s55p2-plots, echo=FALSE}
+library(ggplot2)
+p_arrival <- ggplot(arrival, aes(x = probs, y = times)) + geom_point() +
+  labs(title = 'Arrival Times', x = 'Probability', y = 'Time')
+p_service <- ggplot(service, aes(x = probs, y = times)) + geom_point() +
+  labs(title = 'Service Times', x = 'Probability', y = 'Time')
+library(gridExtra)
+grid.arrange(p_arrival, p_service)
+```
+
+\newpage
+### Arrival Times
+The curve for arrival times shown above appears to resemble that of a cubic equation for $x$ vs. $y^3$.  As such, a third-degree polynomial is fit to the data:
+```{r s55p2-cubic-fit}
+mod_arr <- lm(times ~ poly(probs, 3, raw = TRUE), data = arrival)
+arrival$preds <- predict(mod_arr, arrival)
+```
+
+The equation for the best-fit third-order fit is
+$$b = 18.4377 + 302.2950 x - 561.4642 x^2 + 371.2266 x^3$$
+This appears reasonable when plotted against the original data:
+```{r s55p2-b-plot, echo=FALSE, fig.height=3}
+ggplot(arrival, aes(x = probs)) +
+  geom_point(aes(y = times)) +
+  geom_line(aes(y = preds)) +
+  labs(title = 'Observed vs. fit interarrival times', x = 'x', y = 'b')
+```
+
+
+### Service Times
+To try fitting a one-term model, a number of transforms are examined.  A transformation using the square root of probability appears to provide a near-linear relationship:
+```{r s55p2-sqrt-plot, echo=FALSE, fig.height=3}
+ggplot(service, aes(x = sqrt(probs), y = times)) + geom_point() +
+  labs(title = 'Service time one-term model', subtitle = 'Square root of probability')
+```
+
+A linear equation is fit for this one-term model:
+```{r s55p2-sqrt-fit}
+mod_arr_sq <- lm(times ~ I(sqrt(probs)), data = service)
+```
+
+The equation for this line is given by
+$$u = 40.4257 + 43.9362 \sqrt{x}$$
+
+Plotting this equation against the original data, it appears reasonable:
+```{r s55p2-u-plot, echo=FALSE, fig.height=3}
+ggplot(service, aes(x = probs, y = times)) +
+  geom_point() +
+  stat_function(fun = function(x) 40.4257 + 43.9362 * sqrt(x)) +
+  labs(title = 'Observed vs. fit unloading times', x = 'x', y = 'u')
+```
