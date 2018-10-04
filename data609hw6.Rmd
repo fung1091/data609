@@ -1,0 +1,199 @@
+---
+title: "data609hw6"
+author: "jim lung"
+date: "October 4, 2018"
+output: html_document
+---
+
+__251__
+
+2) A rancher has determined that the minimum weekly nutritional requirements for an average-sized horse include 40lb of protein, 20lb of carbohydrates, and 45lb of roughage. These are obtained from the following sources in varying amounts at the prices indicated:
+
+![table](https://raw.githubusercontent.com/fung1091/data609/master/251.png)
+
+Formulate a mathematical model to determine how to meet the minimum nutritional requirements at minimum cost.
+
+
+Amounts of all the different feed types are paramaters in the model.
+
+Minimize $Cost(H, T, F, P) = 1.8H + 3.5T + 0.4F + 1.0P$
+
+This is subjec to following:
+
+Protein: $0.5H + 1.0T + 2.0F + 6.0P >= 40.0$
+
+Carbs: $2.0H + 4.0T + 0.5F + 1.0P >= 20.0$
+
+Roughage: $5.0H + 2.0T + 1.0F + 2.5P >= 25.0$
+
+$H,T,F,P >=0$
+
+
+
+__264__
+
+6) Use graphical analysis to Maximize 10x + 35y subject to:
+
+8x + 6y <= 48 (board-feet of lumber)
+
+4x = y <= 20 (hours of carpentry)
+
+y >= 5 (demand)
+
+x,y, >= 0 (nonnegativity)
+
+```{r}
+library(ggplot2)
+
+dfC1 <- data.frame(x=c(0,6), y=c(8,0))
+dfC2 <- data.frame(x=c(0,5), y=c(20,0))
+dfC3 <- data.frame(x=c(0,6), y=c(5,5))
+dfC4x <- data.frame(x=c(0,0), y=c(0,8))
+dfC4y <- data.frame(x=c(0,6), y=c(0,0))
+region <- data.frame(x=c(0, 0, 2.25), y=c(5, 8, 5))
+
+g1 <- ggplot() + geom_line(data=dfC1, aes(x=x, y=y), colour="red") + 
+  geom_line(data=dfC2, aes(x=x, y=y), colour="blue") + 
+  geom_line(data=dfC3, aes(x=x, y=y), colour="green") + 
+  geom_line(data=dfC4x, aes(x=x, y=y), colour="purple") + 
+  geom_line(data=dfC4y, aes(x=x, y=y), colour="purple") + 
+  geom_polygon(data=region, aes(x=x, y=y), fill="orange") 
+
+g1
+
+```
+
+The extreme points are: 
+
+The intersection of constraint 1 and 5 at point (0,8)
+
+The intersection of constraint 1 and 3 at point (2.25, 5)
+
+The intersection of constraint 3 and 5 at point (0,5)
+
+Plug them into the objective equation : $(10 * x) + (35 * y)$ to find the maximum which is *(0,8) with value of 280.0.*
+
+__268__
+
+6) Using the method in section 7.3, Maximize 10x + 35y subject to:
+
+8x + 6y <= 48 (board-feet of lumber)
+
+4x + y <= 20 (hours of carpentry)
+
+y >= 5 (demand)
+
+x,y, >= 0 (nonnegativity)
+
+
+*Decision Variables to format xi*
+
+8x1 + 6x2 <= 48 (board-feet of lumber)
+
+4x1 + x2 <= 20 (hours of carpentry)
+
+x2 >= 5 (demand)
+
+x1,x2 >= 0 (nonnegativity)
+
+*Add yi variables*
+
+8x1 + 6x2 + y1 = 48 (board-feet of lumber)
+
+4x1 + x2 + y2 = 20 (hours of carpentry)
+
+x2 = 5 + y3(demand)
+
+x1,x2, y1, y2, y3 >= 0 (nonnegativity)
+
+Iterate through the variable combinations, set 4x1 + x2 + y2 = 20 to 0.
+
+x1,x2 = 0, x2 violates constraint 3
+
+when x1,y1 = 0
+
+6x2 = 48 (board-feet of lumber)
+
+x2 + y2 = 20 (hours of carpentry)
+
+x2 = 5 + y3 (demand)
+
+Results:
+
+x2 = 8
+y2 = 12
+y3 = 3
+
+*The feasible point at (0,8)*
+
+When x1, y2 = 0
+
+6x2 + y1 = 48
+
+x2 = 20
+
+x2 = 5
+
+Results:
+x2 = 20
+y3 =15
+y1 = -52.
+
+*Solution is not possible, negative*
+
+When x1,y3=0
+
+6x2 + y1 = 48
+
+x2 + y2 = 20
+
+x2 = 5
+
+Results:
+
+x2 = 5
+y2 = 15
+y1 = 18
+
+*Feasible points at (0,5)*
+
+x2,y1 = 0, constraint 3 is violated
+
+y1,y2 = 0. consraint 3 is violated
+
+When y1,y3 = 0
+
+8x1 + 6x2 = 48
+
+4x1 + x2 + y2 =20
+
+x2 = 5
+
+Results:
+
+x2= 5
+x1 = 2.25
+y2=6
+
+*Feasible points at (2.25,5)*
+
+When y2,y3 = 0
+
+8x1 + 6x2 + y1 = 48
+
+4x1 + x2 = 20
+
+x2 = 5 
+
+Results:
+
+x2 = 5
+x1 = 3.75
+y1 = -12
+
+*Solution is not possible, negative*
+
+
+Enter three possible solutions into $(10 * x) + (35 * y)$
+
+Get the same answer, find the maximum which is *(0,8) with value of 280.0.*

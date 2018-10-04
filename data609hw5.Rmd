@@ -1,0 +1,113 @@
+---
+title: "data609hw5"
+author: "jim lung"
+date: "October 1, 2018"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+__228__
+
+1) Consider a model for the long-term dining behavior of the students at College USA. It is found that 25% of the students who eat at the college's Grease Dining Hall return to eat there again, wheras those who eat at Sweet Dining Hall have a 93% return rate. These are the only two dining halls available on campus, and assume that all students eat at one of these halls. Formulate a model to solve for the long-term percentage of students eating at each hall.
+
+Based on the parameters of the problem 
+
+25% return rate at Grease, 75% at Sweet
+93% return rate at Sweet, 7% at Grease
+
+```{r}
+model <- function(Snaught, Gnaught)
+{
+  sweet <- Snaught
+  grease <- Gnaught
+
+  df <- data.frame(i=c(0), Sweet=c(sweet), Grease=c(grease))
+  for(i in 1:100)
+  {
+    sweet1 <- 0.25 * grease + 0.07 * sweet
+    grease1 <- 0.75 * grease + 0.93 * sweet
+    sweet <- sweet1
+    grease <- grease1
+    df <- rbind(df, cbind(i=c(i), Sweet=sweet, Grease=grease))
+  }
+  return(df)
+}
+
+Snaught <- 50
+Gnaught <- 50
+df5050 <- model(Snaught, Gnaught)
+knitr::kable(head(df5050,20))
+
+```
+
+Steady state is reached after 10 iterations.
+
+__232__
+
+1) Consider a stereo with CD player, FM-AM radio tuner, speakers (dual), and power amplifier (PA) componenets, as displayed with the reliabilities shown in Figure 6.11. Determine the system's reliability. What assumptions are required in your model?
+
+![Figure 6.11](https://raw.githubusercontent.com/fung1091/data609/master/232.png)
+
+
+
+```{r}
+#Speakers are in parallel
+speakers <- 0.99 + 0.99 - (0.99*0.99)
+speakers
+
+#radio and CD in parallel
+radiocd <- 0.98 + 0.97 - (0.98*0.97)
+radiocd
+
+#PA is solo
+PA <- 0.95
+
+reliability <- PA * radiocd * speakers
+reliability
+```
+
+__240__
+
+Use the basic linear model y = ax+b to fit the folowing data sets. Provide the model, provide the values of SSE, SSR, and $R^2$, and provide a residual plot.
+
+1) For table 2.7, predict weight as function of height
+
+![Table 2.7](https://raw.githubusercontent.com/fung1091/data609/master/2_7.png)
+
+```{r, tidy=TRUE}
+height <- c(60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80)
+weight <- c(132,136,141,145,150,155,160,165,170,175,180,185,190,195,201,206,212,218,223,229,234)
+df <- data.frame(height, weight)
+
+m <- nrow(df)
+
+a <- (m * sum(df$height * df$weight) - sum(df$height) * sum(df$weight)) / 
+  (m * sum(df$height^2) - sum(df$height)^2)
+
+b <- (sum(df$height^2) * sum(df$weight) - sum(df$height * df$weight) * sum(df$height)) / 
+  (m * sum(df$height^2) - sum(df$height)^2)
+
+#linear regression model
+
+#SSE
+SSE <- sum((df$weight - (a * df$height + b))^2)
+SSE
+
+#SST
+ybar <- mean(df$weight)
+SST <- sum((df$weight - ybar)^2)
+SST
+
+#SSR
+SSR <- SST - SSE
+SSR
+
+#Coefficient of determination
+R2 <- 1 - (SSE / SST)
+R2
+
+df$y_hat <- (a * df$height + b)
+df$residual <- df$weight - df$y_hat
+head(df)
+```
