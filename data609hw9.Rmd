@@ -1,0 +1,314 @@
+---
+title: "data609hw9"
+author: "jim lung"
+date: "November 1, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE, fig.align='center', comment=NA, echo=FALSE)
+```
+
+## Section 10.1, Problem 1
+### Part a
+$$\begin{array}{crccc}
+\ & \ & \ & \textbf{Colin} & \ \\
+\ & \ & \textbf{C1} & \ & \textbf{C2} \\
+\ & \textbf{R1} & 10 & \Longleftrightarrow & 10 \\
+\textbf{Rose} & \ & \Uparrow & \ & \Uparrow \\
+\ & \textbf{R2} & 10 & \Longrightarrow & 10
+\end{array}$$
+
+
+The game has a pure Nash equilibrium with a value of 10.  Strategy R1 maximizes Rose's value regardless of Colin's strategy.  While the value can be achieved at more than one combination of strategies, it is still a Nash equilibrium since neither party can benefit by departing from that strategy (i.e. either (R1, C1) or (R2, C2)).
+
+### Part c
+$$\begin{array}{crccc}
+\ & \ & \ & \textbf{Pitcher} & \ \\
+\ & \ & \textbf{Fastball} & \ & \textbf{Knuckleball} \\
+\ & \textbf{Guesses fastball} & 0.400 & \Longrightarrow & 0.100 \\
+\textbf{Batter} & \ & \Uparrow & \ & \Downarrow \\
+\ & \textbf{Guesses knuckleball} & 0.300 & \Longrightarrow & 0.250
+\end{array}$$
+
+
+The game has a pure Nash equilibrium with a value of 0.250.  Pitcher strategy *Knuckleball* minimizes the score regardless of batter strategy; given this pitcher strategy, batter strategy *Guess knuckleball* maximizes the score.
+
+
+## Section 10.2, Problem 2a
+Referring to $x$ as the portion of times that Rose plays strategy R1 and $1-x$ the portion of the time that Rose plays strategy R2, her goal is to maximize the payoff $P$.  If Colin plays purely strategy C1, the expected value of $P$ is $10x + 5(1-x)$; if he plays purely strategy C3, the expected value of $P$ is $10x$.  Thus, since $x$ is a probability, the linear program for Rose is
+
+$$\textrm{Maximize }P$$
+Subject to
+$$\begin{array}{c}
+P \leq 10x + 5(1-x) \\
+P \leq 10x \\
+x \geq 0 \\
+x \leq 1
+\end{array}$$
+
+
+If $y$ represents the portion of the time that Colin plays strategy C1, then the expected value of $P$ is $10y + 10(1-y) = 10$ if Rose plays purely strategy R1 and $5y$ if Rose plays purely strategy R2.  This means that, for Colin, the linear program is
+
+$$\textrm{Minimize }P$$
+Subject to
+$$\begin{array}{c}
+P \geq 10 \\
+P \geq 5y \\
+x \geq 0 \\
+x \leq 1
+\end{array}$$
+
+
+### Geometric Solution
+
+```{r s2-rose-plot}
+library(ggplot2)
+ggplot() + geom_vline(xintercept = c(0, 1), lty = 2) +
+  geom_abline(intercept = c(0, 5), slope = c(10, 5)) +
+  scale_x_continuous('x') + scale_y_continuous('P', limits = c(0, 10)) +
+  theme_minimal() + labs(title = "Rose's strategy", subtitle = 'Geometric solution') +
+  annotate('point', x = 1, y = 10, size = 3, shape = 1, col = 'red')
+```
+
+From this graph, any solution along or below the line $P = 10x$ is a feasible solution in the range $0 \leq x \leq 1$.  The maximized value of $P$ is $P = 10$ at $x = 1$ -- if Rose plays strategy R1 100% of the time, she is guaranteed a maximum payoff of 10.
+
+```{r}
+ggplot() + geom_vline(xintercept = c(0, 1), lty = 2) +
+  geom_hline(yintercept = 10, lty = 5, col = 'red', lwd = 1) +
+  geom_abline(intercept = 0, slope = 5) +
+  scale_x_continuous('y') + scale_y_continuous('P', limits = c(0, 10)) +
+  theme_minimal() + labs(title = "Colin's strategy", subtitle = 'Geometric solution')
+```
+
+This graph shows that there is no optimal strategy for Colin -- regardless of his mix of strategies, the furthest he can minimize the payoff is to $P=10$.  Due to this, Colin should likely play a strategy of pure C2, as this places him in the best position to take advantage of suboptimal play by Rose.
+
+
+### Algebraic Solution
+For Rose, the intersection points of the above-stated constraints are shown below:
+```{r}
+library(pander)
+rose = data.frame(x = c(0, 1, 0, 1), P = c(0, 10, 5, 10), Feasible = c('Y', 'Y', 'N', 'Y'))
+emphasize.strong.rows(which(rose$P == max(rose$P) & rose$Feasible == 'Y'))
+pander(rose)
+```
+
+For Colin, the values are below:
+```{r}
+colin = data.frame(x = c(0, 1, 0, 1), P = c(10, 10, 0, 5), Feasible = c('Y', 'Y', 'N', 'N'))
+emphasize.strong.rows(c(1, 2))
+pander(colin)
+```
+
+As in the geometric solution, the best strategy for Rose is $x=1$ i.e. always playing strategy R1, and Colin's strategy does not matter.
+
+## Section 10.3, Problem 3
+### Investor's Game
+For the investor, the variables of interest are
+
+  - $P$ = Payoff
+  - $x_A$ = Portion of the time to play alternative A
+  - $x_B$ = Portion of the time to play alternative B
+  - $x_C$ = Portion of the time to play alternative C
+
+The linear program is then
+$$\textrm{Maximize }P$$
+Subject to
+$$\begin{array}{rl}
+3000x_A + 1000x_B + 4500x_C - P \geq 0 & Economy\ 1\\
+4500x_A + 9000x_B + 2000x_C - P \geq 0 & Economy\ 2\\
+6000x_A + 2000x_B + 3500x_C - P \geq 0 & Economy\ 3\\
+x_A, x_B, x_C \geq 0 \\
+x_A, x_B, x_C \leq 1 \\
+x_A + x_B + x_C = 1 \\
+P \geq 0
+\end{array}$$
+
+This linear program can be solved using the `lpSolve` R package:
+
+```{r}
+# LHS of constraints in matrix form
+inv_mat <- matrix(c(3000, 1000, 4500, -1,
+                    4500, 9000, 4000, -1,
+                    6000, 2000, 3500, -1,
+                    1, 0, 0, 0,
+                    0, 1, 0, 0,
+                    0, 0, 1, 0,
+                    1, 0, 0, 0,
+                    0, 1, 0, 0,
+                    0, 0, 1, 0,
+                    1, 1, 1, 0,
+                    0, 0, 0, 1),
+                  ncol = 4, byrow = TRUE, 
+                  dimnames = list(NULL, c('xA', 'xB', 'xC', 'P')))
+# objective as vector
+inv_obj <- c(0, 0, 0, 1)
+# direction & RHS of constraints as vectors
+inv_dir <- c(rep('>=', 3), rep('>=', 3), rep('<=', 3), "==", ">=")
+inv_rhs <- c(rep(0, 3), rep(0, 3), rep(1, 3), 1, 0)
+# solve system
+library(lpSolve)
+inv_strat <- lp('max', inv_obj, inv_mat, inv_dir, inv_rhs)
+inv_strat
+```
+
+The optimal strategy for the investor is $x_A = 0.25$, $x_B = 0$, $x_C = 0.75$, which yields an optimal payoff of $P = 4125$.
+
+### Economy's Game
+For the economy, the variables of interest are
+
+  - $P$ = Payoff
+  - $y_1$ = Portion of the time to play condition 1
+  - $y_2$ = Portion of the time to play condition 2
+  - $y_3$ = Portion of the time to play condition 3
+
+The linear program is
+$$\textrm{Minimize }P$$
+Subject to
+$$\begin{array}{rl}
+3000y_1 + 4500y_2 + 6000y_3 - P \leq 0 & Alternative\ A\\
+1000y_1 + 9000y_2 + 2000y_3 - P \leq 0 & Alternative\ B\\
+4500y_1 + 4000y_2 + 3500y_3 - P \leq 0 & Alternative\ C\\
+y_1, y_2, y_3 \geq 0 \\
+y_1, y_2, y_3 \leq 1 \\
+y_1 + y_2 + y_3 = 1 \\
+P \geq 0
+\end{array}$$
+
+The economy's program is solved in the same way as the investor's:
+```{r}
+# LHS of constraints in matrix form
+eco_mat <- matrix(c(3000, 4500, 6000, -1,
+                    1000, 9000, 2000, -1,
+                    4500, 4000, 3500, -1,
+                    1, 0, 0, 0,
+                    0, 1, 0, 0,
+                    0, 0, 1, 0,
+                    1, 0, 0, 0,
+                    0, 1, 0, 0,
+                    0, 0, 1, 0,
+                    1, 1, 1, 0,
+                    0, 0, 0, 1),
+                  ncol = 4, byrow = TRUE, 
+                  dimnames = list(NULL, c('y1', 'y2', 'y3', 'P')))
+# objective as vector
+eco_obj <- c(0, 0, 0, 1)
+# direction & RHS of constraints as vectors
+eco_dir <- c(rep('<=', 3), rep('>=', 3), rep('<=', 3), "==", ">=")
+eco_rhs <- c(rep(0, 3), rep(0, 3), rep(1, 3), 1, 0)
+# solve system
+eco_strat <- lp('min', eco_obj, eco_mat, eco_dir, eco_rhs)
+eco_strat
+```
+
+The optimal strategy for the economy is $y_1 = 0.625$, $y_2 = 0$, $y_3 = 0.375$, which yields an optimal payoff of $P = 4125$.
+
+
+## Section 10.5, Problem 3
+As shown by the movement diagram below, a pure strategy exists -- Rose playing R2 and Colin playing either C1 or C2
+$$\begin{array}{crccc}
+\ & \ & \ & \textbf{Colin} & \ \\
+\ & \ & \textbf{C1} & \ & \textbf{C2} \\
+\ & \textbf{R1} & 0.5 & \Longrightarrow & 0.3 \\
+\textbf{Rose} & \ & \Downarrow & \ & \Downarrow \\
+\ & \textbf{R2} & 0.6 & \Longleftarrow & 1
+\end{array}$$
+
+Due to this, neither the equating expected values or method of oddments will return useful solutions; however, they are still conducted for demonstration purposes.
+
+### Equating Expected Values
+For Rose, the expected value under each of Colin's strategies are
+$$\begin{aligned}
+E(C1) &= 0.5x + 0.6(1-x) \\
+E(C2) &= 0.3x + 1(1-x)
+\end{aligned}$$
+
+where $x$ is the portion of the time Rose uses strategy R1.  Setting these equal to one another and solving,
+
+$$0.5x + 0.6(1-x) = 0.3x + 1(1-x) \longrightarrow x = \frac{2}{3}; 1-x = \frac{1}{3}$$
+The value of the game is $$E(C1) = 0.5x + 0.6(1-x) = \frac{8}{15} \approx 0.5333$$
+
+For Colin, the expected value under each of Rose's strategies are
+$$\begin{aligned}
+E(R1) &= 0.5y + 0.3(1-y) \\
+E(R2) &= 0.6y + 1(1-y)
+\end{aligned}$$
+
+where $y$ is the portion of the time Colin uses strategy C1.  Setting these equal to one another and solving,
+
+$$0.5y + 0.3(1-y) = 0.6y + 1(1-y) \longrightarrow y = \frac{7}{6}; 1-y = -\frac{1}{6}$$
+
+Clearly this is a violation of the condition $0 \leq y \leq 0$ that applies since $y$ is a probability.  Nonetheless, the value of the game is calculated:
+$$E(R1) = 0.5y + 0.3(1-y) = \frac{7}{12} - \frac{3}{60} = \frac{8}{15} \approx 0.5333$$
+
+### Method of Oddments
+As above, the solution does not produce useful results:
+
+```{r s5}
+odd <- matrix(c(0.5, 0.3, 0.2,
+                0.6, 1, 0.4,
+                0.1, 0.7, '$0.6 \\neq 0.8$'),
+               nrow = 3, byrow = TRUE,
+               dimnames = list(c('R1', 'R2', '$[\\Delta]$'),
+                               c('**C1**', '**C2**', '**$[\\Delta]$**')))
+pander(odd, style = 'rmarkdown', split.table = Inf,
+       justify = c('right', 'center', 'center', 'center'))
+```
+
+
+## Section 10.6, Problem 2
+
+$$\begin{array}{crccc}
+\ & \ & \ & \textbf{Colin} & \ \\
+\ & \ & \textbf{C1} & \ & \textbf{C2} \\
+\ & \textbf{R1} & (1,2) & \Longrightarrow & (3,1) \\
+\textbf{Rose} & \ & \Downarrow & \ & \Downarrow \\
+\ & \textbf{R2} & (2,4) & \Longleftarrow & (4,3)
+\end{array}$$
+
+There is a stable Nash equilibrium at $(2,4)$ -- neither player can utilaterally improve from this position.
+
+Rose would rather Colin play C2, as it increases her potential payoff.  To do this, she can issue a threat:
+
+> _If Colin plays C1, Rose will play R1_
+This meets the critera for a threat:
+
+  - it is contingent on Colin's action
+  - it harms Rose (lowers her payoff from 2 playing R2 to 1 playing R1)
+  - it is harmful to Colin (lowers his payoff from R under R2 to 2 under R1)
+  
+The game then becomes
+$$\begin{array}{crccc}
+\ & \ & \ & \textbf{Colin} & \ \\
+\ & \ & \textbf{C1} & \ & \textbf{C2} \\
+\ & \textbf{R1} & (1,2) & \Longrightarrow & (3,1) \\
+\textbf{Rose} & \ &  & \ & \Downarrow \\
+\ & \textbf{R2} & Eliminated &  & (4,3)
+\end{array}$$
+
+Thus Colin will choose strategy C2, and Rose will choose strategy R2, maximizing her payoff at $(4, 3)$.
+
+
+## Section 10.7, Problem 3
+To get the table of payoffs, the probabilities must be matched in a 3-by-3 grid and multiplied by the associated payoff per each outcome and summing the two numbers:
+
+$$\begin{array}{cccc}
+\ & \textbf{IL} & \textbf{IM} & \textbf{IC} \\
+\textbf{DL} & (3, -5) & (3, -10) & (3, -10)\\
+\textbf{DM} & (10, -5) & (8, -6) & (8, -10)\\
+\textbf{DC} & (10, -5) & (10, -6) & (10, -10)\\
+\end{array}$$
+
+
+Summing these values and completing the movement diagram yields
+
+$$\begin{array}{cccccc}
+\ & \textbf{IL} & \ & \textbf{IM} & \ & \textbf{IC} \\
+\textbf{DL} & -2 & \Rightarrow & -7 & \Leftrightarrow & -7\\
+\ & \Downarrow & \ & \Downarrow & \ & \Downarrow \\
+\textbf{DM} & 5 & \ & 2 \ & & -2\\
+\ & \Updownarrow & \ & \Downarrow & \ & \Downarrow \\
+\textbf{DC} & 5 & \Rightarrow & 4 & \Rightarrow & 0\\
+\end{array}$$
+
+There is a nash equilibrium at (DC, IC) -- here the game has a value of 0 and neither player can unilaterally improve.

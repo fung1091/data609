@@ -1,0 +1,155 @@
+---
+title: "data609hw10"
+author: "jim lung"
+date: "November 1, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE, fig.align='center', comment=NA, echo=FALSE)
+```
+
+## Section 11.1, Problem 3
+
+```{r s1, echo=TRUE}
+t <- c(1814, 1824, 1834, 1844, 1854, 1864)
+P <- c(125, 275, 830, 1200, 1750, 1650)
+```
+
+```{r s1-plot-pt}
+library(ggplot2)
+theme_set(theme_minimal())
+qplot(t, P, main = 'Sheep Population in Tasmania', ylab = 'P(t)')
+```
+
+
+From the plot of $P(t)$ vs. $t$ above, it appears that $M = 2000$ is reasonable estimate, assuming that the decrease in 1864 is not due to a "bounce-back" effect from hitting the maximum population.
+
+```{r s1-plot-lnt}
+qplot(t, log(P / (2000 - P)), ylab = 'ln[P / (M - P)]', main = 'ln[P / (M - P)] vs. t') +
+  stat_smooth(method = 'lm', lty = 5, lwd = 0.5, col = 'darkred', fill = 'grey70')
+```
+
+The plot appears to show an approximately linear relationship between the variables $\ln \left[P / (M - P)\right]$ and $t$; thus a logistic curve seems reasonable.
+
+The value of $rM$ can be estimated as the slope of the line:
+```{r s1-lm, echo=TRUE}
+M <- 2000
+rM <- lm(log(P / (M - P)) ~ t)$coefficients[[2]]
+rM
+```
+
+This yields $$rM \approx `r round(rM, 4)`$$
+$t^*$ can then be solved for using
+$$t^* = t_0 - \frac{1}{rM} \ln \frac{P_0}{M-P_0} \approx `r round(t[1] - (1 / rM) * log(P[1] / (M - P[1])), 1)`$$
+
+
+## Section 11.2, Problem 6
+Outside of drug dosage, the model described could be used for a number of situations where a treatment of some sort is applied with declining efficacy over time:
+
+  - Processing of sewage in a wastewater treatment plant
+  - Maintenance of pH in a swimming pool
+  - Application of pesticides to crops
+  - Introduction of predators/prey into a biosphere
+
+
+\newpage
+## Section 11.3, Problem 1
+`r k0 <- 1 / (2* 0.054)`
+$$d_b = 0.054v^2 =\frac{v^2}{2k} \longrightarrow k = \frac{1}{2 \times 0.054} \approx `r round(k0, 3)` \frac{\textrm{mi}^2}{\textrm{ft} \cdot \textrm{hr}^2}$$
+
+This can be converted to units of ft/s$^2$:
+`r k1 <- k0 * 5280^2 / (3600^2)`
+$$`r round(k0, 3)` \frac{\textrm{mi}^2}{\textrm{ft} \cdot \textrm{hr}^2} \times \frac{5280^2 \ \textrm{ft}^2}{1\ \textrm{mi}^2} \times \frac{1\ \textrm{hr}^2}{3600^2\ \textrm{s}^2} \approx `r round(k1, 3)` \frac{\textrm{ft}}{\textrm{s}^2}$$
+
+Using the average braking distance values in Table 2.4 (not table 4.4 as indicated in the text) and converting the drivers' speeds from miles per hour to feet per second, the following plot is created:
+
+```{r s3-date, echo=TRUE}
+v <- seq(20, 80, 5) * 5280 / 3600
+db <- c(20, 38, 40.5, 52.5, 72, 92.5, 118, 148.5, 182, 220.5, 266, 318, 376)
+```
+
+```{r s3-plot}
+qplot(v^2/2, db, main = 'Visual estimation of 1/k') +
+  stat_smooth(method = 'lm', formula = y ~ x + 0, se = FALSE,
+              lty = 5, lwd = 0.5, col = 'darkred')
+```
+
+The slope of the best-fit line through the origin has a value of $1/k$.  Visually, the line appears to show an increase in value of $d_b$ of roughly 50 for each increase in $v^2/2$ of 1000; thus
+$$\frac{1}{k} \approx \frac{50}{1000} = 0.05 \longrightarrow k \approx 20$$
+
+
+\newpage
+## Section 11.7, Problem 21
+Gas enters with an oxygen concentration of 100% and exits at a concentration equal to the concentration of the tube.  To maintain the volume of gas at one liter, the rate (in liters per second) at which gases enter and exit the tube must be equal:
+$$\begin{array}{c}
+c_{in} = 1.00\\
+c_{out} = c\\
+r_{in} = r_{out} = r
+\end{array}$$
+
+The change in concentration per second can then be shown by
+$$\Delta c = r \left( c_{in} - c \right) \Delta t = r ( 1 - c ) \Delta t$$
+
+The rate times the change in time $r \Delta t$ gives the change in volume $\Delta V$.  Replacing this,
+
+$$\Delta c = (1 - c) \Delta V$$
+
+Rearranging and taking the limit as $\Delta V \rightarrow 0$,
+$$\frac{dc}{dV} + c = 1$$
+
+This equation is in standard form with $P(V) = 1$ and $Q(V) = 1$
+
+The integrating factor is given by
+$$\mu(V) = e^{\int P(V) dV} = e^{\int 1 dV} = e^{V}$$
+
+Multiplying this to get the right-hand integral,
+$$\int \mu(V) Q(V)dV = \int e^{V}dV = e^{V} + C$$
+
+Now, writing the general solution,
+$$\mu (V) c = \int \mu(V) Q(V)dV \rightarrow c \times e^V = e^V + C$$
+$$c = 1 + \frac{C}{e^V}$$
+
+It is known that $c(V = 0) = 0.21$, so $C = -0.79$ and
+$$c = 1 - 0.79e^{-V}$$
+
+After 5 liters have passed through the tube ($V = 5$), $c \approx 0.9947$ and the flask contains 99.47% oxygen.
+
+
+\newpage
+## Section 11.7, Problem 22
+The students each exhale 2,000 cubic inches of air per minute, equivalent to roughly 13.9 cubic feet.  As above, the concentration leaving the room is equivalent to the current concentration in the room.  Finally, it is assumed that air leaves through the ventilators at the same rate it is brought in by the ventilators.  The remaining air (added by students exhaling) is absorbed into the students' lungs.
+
+$$\begin{array}{c}
+c_{students} = 0.04\\
+c_{vent} = 0.0004\\
+c_{out} = c\\
+\\
+r_{students} = 2000/144 \approx 13.8889\\
+r_{vent} = 1000\\
+r_{in} = r_{out} = r_{students} + r_{vent}
+\end{array}$$
+
+The change in level per minute can then be shown by
+$$\Delta c = \left[
+r_{students} \left( c_{students} - c \right) +
+r_{vent} \left( c_{vent} - c \right)
+\right] \Delta t$$
+
+Substituting in values, rearranging, and taking the limit as $\Delta t \rightarrow 0$,
+
+$$\frac{dc}{dt} + 1013.8889c = 0.9556$$
+
+This is in standard form with $P(t) \approx 1013.89$ and $Q(t) \approx 0.96$
+
+$$\mu(t) = e^{\int P(t) dt} = e^{\int 1013.89 dt} = e^{1013.89t}$$
+
+$$\int \mu(t) Q(t)dt = 0.96\int e^{1013.89t}dt = 9.4\times 10^{-4}\ e^{1013.89t} + C$$
+
+$$\mu (t) c = \int \mu(t) Q(t)dV \rightarrow c \times e^{1013.89t} = 9.4\times 10^{-4} e^{1013.89t} + C$$
+$$c = 9.4\times 10^{-4} + \frac{C}{e^{1013.89t}}$$
+
+It is known that $c(t = 0) = 0.0004$, so $C = -5.4 \times 10^{-4}$ and
+$$c = 9.4 \times 10^{-4} -5.4 \times 10^{-4} e^{-1013.88889t}$$
+
+After 1 hour ($t = 60$), $c = 0.000942$ and the room contains 0.0942% carbon dioxide.
