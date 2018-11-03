@@ -1,0 +1,47 @@
+---
+title: "data609projetproposal"
+author: "jim lung"
+date: "November 2, 2018"
+output: pdf_document
+---
+
+# Data 609 Project proposal - Mathematical Modeling Techniques for Data Analytics
+Authors: Jim Lung
+
+## Aim:
+** Use mathematical models to make a decision for portfolio optimization **
+** Investigating portfolio optimization with expected return on investiment in risk control **
+
+## Methodology:
+** Use linear programming techniques to conduct an optimal allocation **
+** Use a quadratic programming approach to determine appropriate portfolio weights **
+** Determine the optimal allocation by given risk appetite and other portfolio constraints **
+
+## Data source:
+** Historical stock price data are readily accessible using functions in "Quantmod" package **
+** The filtered data for this application selects total 9 stock cases from 2015 to August 2018 **
+** The datasets include the date, daily market close price, market volumes, the closing price will be used to make for portfolio optimization **
+
+A sample show as below:
+
+```{r}
+library(quantmod)
+
+# set begin-end date and stock namelist
+begin_date <- "2015-01-01"
+end_date <- "2018-08-31"
+stock_namelist <- c("AAPL", "AMD", "ADI",  "ABBV", "AET", "A",  "APD", "AA","CF")
+
+# download data from YahooFinance
+prices <- xts()
+for (stock_index in 1:length(stock_namelist))
+  prices <- cbind(prices, Ad(getSymbols(stock_namelist[stock_index], 
+                                        from = begin_date, to = end_date, auto.assign = FALSE)))
+colnames(prices) <- stock_namelist
+indexClass(prices) <- "Date"
+
+tail(prices)
+```
+
+
+
