@@ -1,0 +1,187 @@
+---
+title: "data609hw11"
+author: "jim lung"
+date: "November 15, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE, fig.align='center', comment=NA, echo=FALSE)
+```
+
+## Section 12.1, Problem 1
+$$\frac{dx}{dt} = \frac{d}{dt}\left( -e^t \right) = -e^t = -y$$
+$$\frac{dy}{dt} = \frac{d}{dt}\left( e^t \right) = e^t = -x$$
+
+## Section 12.1, Problem 6
+The only point at which $\frac{dx}{dt} = \frac{dy}{dt} = 0$ is $(2, 1)$.
+
+Integrating the equations,
+$$x = \int \left(\frac{dx}{dt}\right)dt = -\int \left( y - 1 \right) dt = -t\left( y - 1 \right)$$
+As $t \to \infty$, $x(t) \to \infty$ if $y_0 < 1$ or $x(t) \to -\infty$ if $y_0 > 1$.
+
+$$y = \int \left(\frac{dy}{dt}\right)dt =  \int \left( x - 2 \right) dt =  t\left( x - 2 \right)$$
+
+As $t \to \infty$, $y(t) \to \infty$ if $x_0 > 2$ or $y(t) \to -\infty$ if $x_0 < 2$.
+
+Since $(x,y) \to (\pm \infty, \pm \infty)$ for $(x_0, y_0) \notin (2,1)$, the point is unstable.
+
+
+
+## Section 12.2, Problem 7
+### Part a
+$$\frac{dt}{dx} = \left( \frac{dx}{dt} \right)^{-1} = \frac{1}{(a - by)x}$$
+$$\frac{dy}{dx} = \frac{dy}{dt} \times \frac{dt}{dx} = \frac{(m - nx)y}{(a - by)x}$$
+
+### Part b
+$$\frac{1}{y} \frac{dy}{dx} = \frac{1}{x} \frac{m - nx}{a - by} \longrightarrow
+\frac{ady}{y} - bdy = \frac{mdx}{x} - ndx$$
+
+$$\int \frac{ady}{y} - \int bdy = \int \frac{mdx}{x} - \int ndx \longrightarrow
+a\ln y - by + K_1 = m\ln x - nx + K_2$$
+
+$$y^a e^{-by} = K x^m e^{-nx}$$
+
+### Part c
+$$\frac{d}{dy} f(y) = ay^{a-1} \times e^{-by} + (-be^{-by}) \times y^a =
+y^{a-1}e^{-by} \left( a - by\right)$$
+
+Setting $f^\prime = 0$ to find the maximum:
+$$y^{a-1}e^{-by} \left( a - by\right) = 0 \longrightarrow a - by = 0 \longrightarrow y = \frac{a}{b}$$
+At $y = \frac{a}{b}$,
+$$f(\frac{a}{b}) = \left( \frac{a}{b} \right)^a e^{-a} = \left( \frac{a}{eb} \right)^a$$
+
+$$\frac{d}{dx} g(x) = mx^{m-1} \times e^{-nx} + (-ne^{-ny}) \times x^m =
+x^{m-1}e^{-nx} \left( m - nx\right)$$
+
+Setting $g^\prime = 0$ to find the maximum:
+$$x^{m-1}e^{-ny} \left( m - nx\right) = 0 \longrightarrow m - nx = 0 \longrightarrow x = \frac{m}{n}$$
+At $x = \frac{m}{n}$,
+$$g(\frac{m}{n}) = \left( \frac{m}{n} \right)^m e^{-m} = \left( \frac{m}{en} \right)^m$$
+
+### Part d
+The constant $K$ from part b is equivalent to
+$$K = \frac{e^{K_1}}{e^{K_2}}$$
+Where $K_1$ and $K_2$ are the integration constants from the left and right sides, respectively.  As $(x, y) \to (m/n, a/b)$, it is clear from the provided equations that $dx/dt, dy/dt \to 0$.
+
+Using this information, the constants can be solved for:
+$$a \ln y - by + K_1 = 0 \longrightarrow e^{K_1} = \frac{y^a}{e^{by}}$$
+
+$$m \ln x - ny + K_2 = 0 \longrightarrow e^{K_2} = \frac{x^m}{e^{nx}}$$
+
+Thus, as $(x, y) \to (m/n, a/b)$,
+$$\lim \left[ \left( \frac{y^a}{e^{by}}\right) \left( \frac{e^{nx}}{x^b} \right)\right] = \frac{e^{K_1}}{e^{K_2}} = K$$
+
+### Part f
+For $y_0 > a/b$, $f(y_0) < M_y$.  This implies
+$$\frac{M_y}{M_x} \left( \frac{x^m}{e^{nx}} \right) = \frac{y_0^a}{e^{by_0}} <M_y
+\longrightarrow \frac{x^m}{e^{nx}} < M_x$$
+
+Per the plot of $g(x)$, there is a single value $x > m/n$ satisfying this condition.  Thus, there exists a unique trajectory approaching $(m/n, a/b)$ from above.
+
+
+## Section 12.3, Problem 1
+### Critical Point
+
+From above, the derivative is given by
+$$f^\prime(y) = y^{a-1}e^{-by} \left( a - by\right)$$
+
+Setting $f^\prime = 0$ to find the maximum:
+$$y^{a-1}e^{-by} \left( a - by\right) = 0 \longrightarrow a - by = 0 \longrightarrow y = \frac{a}{b}$$
+
+Since $y = \frac{a}{b}$ is the only root of the equation $f^\prime(y) = 0$, it is the only critical point of $f(y)$.
+
+The second derivative is given by
+$$f^{\prime\prime}(y) = a(a-1)y^{a-2} \times e^{-by} +ay^{a-1} \times -be^{-by} 
++ b^2e^{-by} \times y^a + ay^{a - 1} \times -be^{-by}$$
+$$f^{\prime\prime}(y) = y^{a - 2} e^{-by} \left(a^2 - 2aby - a + b^2 y^2\right)$$
+
+At the critical point, this is
+$$f^{\prime\prime}(\frac{a}{b}) = \left( \frac{a}{b} \right)^{a - 2} e^{-a} \left(a^2 - 2a^2 - a + a^2\right) = -\frac{a^{a-1}}{e^a\ b^{a-2}}$$
+This second derivative, indicating that the slope is decreasing.  Thus, the critical point is a maximum.
+
+### Limit
+
+The limit of the equation $\lim_{y \to \infty} f(y)$ does not provide a useful limit.  Using L'Hopital's rule to take the derivative of the numerator and denominator, however, provides useful insight:
+$$\lim_{y \to \infty} \frac{y^a}{e^{by}} =
+\lim_{y \to \infty} \frac{\frac{d^{n}}{dy^n}y^a}{\frac{d^{n}}{dy^n}e^{by}} =
+\lim_{y \to \infty} \frac{\prod_{i}^n \{a - i + 1\}y^{a-n}}{b^ne^{by}}$$
+
+From this, it is clear that the denominator will grow much larger than the numerator; thus
+$$\lim_{y \to \infty} f(y) = 0$$
+
+\newpage
+## Section 12.5, Problem 1
+```{r s5, echo=TRUE}
+# function to implement Euler's method
+euler <- function(dxdt, dydt, t0, x0, y0, delta_t, n) {
+  # initial conditions
+  t <- t0
+  x <- x0
+  y <- y0
+  # run loop to get approximations
+  for (i in 1:n) {
+    t_i <- t[length(t)] + delta_t
+    x_i <- x[length(x)] + f(x[length(x)], y[length(y)]) * delta_t
+    y_i <- y[length(y)] + g(x[length(x)], y[length(y)]) * delta_t
+    t <- c(t, t_i)
+    x <- c(x, x_i)
+    y <- c(y, y_i)
+  }
+  # return estimate
+  return(data.frame(t, x, y))
+}
+# functions for dx/dt and dy/dt
+f <- function(x, y) {return(2 * x + 3 * y)}
+g <- function(x, y) {return(3 * x + 2 * y)}
+# get results for delta_t and 0.5*delta_t
+est_a <- euler(f, g, 0, 1, 1, 1/4, 3)
+est_b <- euler(f, g, 0, 1, 1, 1/8, 6)
+# calculate analytical solutions
+soln <- data.frame(t = est_b$t,
+                   x = 0.5 * exp(-est_b$t) + 0.5 * exp(5 * est_b$t),
+                   y = -0.5 * exp(-est_b$t) + 0.5 * exp(5 * est_b$t))
+```
+
+The results of the above estimates (Euler's method using $\Delta t$, Euler's method using $\Delta t/2$, and the analytical solution) are presented below in tabular format and graphically on the following page.
+
+```{r}
+filled_a <- rbind(matrix(c(0.125, NA, NA,
+                           0.375, NA, NA,
+                           0.625, NA, NA),
+                         byrow = TRUE, nrow =3,
+                         dimnames = list(NULL, names(est_a))),
+                  est_a)
+filled_a <- filled_a[order(filled_a$t), ]
+rownames(filled_a) <- 1:7
+tbl_comp <- cbind(filled_a, est_b, soln)
+names(tbl_comp) <- c('$t$', '$x_{E(\\Delta t)}$', '$y_{E(\\Delta t)}$',
+                     't2', '$x_{E(\\Delta t / 2)}$', '$y_{E(\\Delta t / 2)}$',
+                     't3', '$x_A$', '$y_A$')
+tbl_comp <- subset(tbl_comp, select = -c(t2, t3))
+pander::pander(tbl_comp, split.table = Inf)
+```
+
+
+```{r plot, fig.height=8}
+# combine data
+comp <- rbind(est_a, est_b, soln)
+# add method for coloring
+comp$Method <- c(rep('Euler t', nrow(est_a)),
+                 rep('Euler t/2', nrow(est_b)),
+                 rep('Analytical', nrow(soln)))
+# create plots
+library(ggplot2)
+theme_set(theme_light())
+p_xt <- ggplot(comp, aes(t, x, col = Method)) + geom_line(show.legend = FALSE)
+p_yt <- ggplot(comp, aes(t, y, col = Method)) + geom_line(show.legend = FALSE)
+p_yx <- ggplot(comp, aes(x, y, col = Method)) + geom_line() +
+  theme(legend.position = 'bottom')
+# create plot grid
+library(grid)
+library(gridExtra)
+grid.arrange(p_xt, p_yt, p_yx, ncol = 2,
+             layout_matrix = cbind(c(1, 3), c(2, 3)), heights = c(9/24, 15/24),
+             top = textGrob('Estimated vs. Analytical Solutions',
+                            gp = gpar(fontsize = 14, fontface = 'bold')))
+```

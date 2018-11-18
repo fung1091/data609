@@ -1,0 +1,77 @@
+---
+title: "data609hw12"
+author: "jim lung"
+date: "November 15, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE, fig.align='center', comment=NA, echo=FALSE)
+```
+
+## Section 13.1, Problem 2
+The company may consider a back-order policy if it carries certain items that are not highly-demanded by customers.  Instituting this policy would help the company to reduce its storage costs -- the company by understocking (or not stocking at all) low-demand items.
+
+Stock-outs will likely incur opportunity costs -- customers will purchase the product from one of the store's competitors.  This may also contribute to a longer-term "loss of goodwill cost" as suggested in the problem description -- customers may be frustrated by stock-outs and avoid purchasing from the company in the future.  Finally, there may be increased delivery or shipping costs associated with back-orders if the company decides to expedite delivery to its warehouse or customers for back-orders.  These last costs are easy to estimate directly; the others will likely have to be based on assumptions and industry studies.
+
+The constant slope of the quantity $Q$ vs. time $T$ suggest an assumption of constant demand $r$.  As the quantity increases only after becoming negative, there is some negative buffer value $q_b$ at which additional orders are made.  Since the quantity raises to the same level after stock-outs, the order quanity is the same every time.
+
+An ordering cycle $t$ is the sum of two periods: $t_i$, the time during which the item is in inventory, and $t_b$, the time during which the item is on back-order.  The cost per cycle comprises three components: delivery costs; storage costs; and loss of goodwill costs.  Assuming constant delivery costs $d$ and storage costs $s$ based on inventory:
+
+$$ct = d + s \frac{Q}{2}{t_i} + wt_b$$
+
+The portion of time that the item is in inventory can be represented by the constant $\phi$.  Substituting in the equality $q = rt$ and dividing both sides by $t$ to get the average cost:
+
+$$c = \frac{d}{t} + \frac{sr\phi t^2}{2t} + \frac{w(1 - \phi)t}{t} = \frac{d}{t} + \frac{srt\phi}{2} + w + w\phi$$
+
+Differentiating this with respect to $t$ and setting to 0 yields a critical point:
+
+$$c^\prime = -\frac{d}{t^2} + \frac{sr\phi}{2} = 0 \longrightarrow T^* = \sqrt{\frac{2d}{sr\phi}}$$
+
+
+$$Q^* = rT^* = \sqrt{\frac{2dr}{s\phi}}$$
+
+Thus the optimal order amount incrases as the delivery cost $d$ and demand $r$ increase, and decrease as the storage cost $s$ increase.  These components mirror the situation for a retailer without a stock-out policy.
+
+The key differentiator is the factor $\phi$ -- the portion of time that the stock is in inventory.  If $\phi = 1$, this is identical to having no stock-out policy.  As $phi$ decreases, the optimal order quantity $Q^*$ increases, approaching $\infty$ as $\phi \to 0$ -- this makes sense, as it means there will never be any inventory.
+This variable can be converted a measure of time -- how far back-orded does the company wish to allow itself to get?  Given a constant demand $r$, the quantity back-ordered is given by $q_\phi =rt(1-\phi)$.  If this quantity is known, the equation for $Q^*$ above can be rearranged to solve in terms of it.
+
+
+## Section 13.2, Problem 2
+$$\frac{\partial f}{\partial x} = 6x + 6y -2 = 0$$
+$$\frac{\partial f}{\partial y} = 6x + 14y + 4 = 0$$
+
+Solving the first equation for $x$ gives $$x = \frac{2 - 6y}{6}$$
+
+Substituting this into the second equation gives $$2 - 6y + 14y + 4 = 0 \longrightarrow y = -\frac{3}{4}$$
+
+Plugging this value of $y$ back into the first equation gives $$x = \frac{1}{3} + \frac{1}{4} = \frac{13}{12}$$
+
+Substituting both of these values into $f$:
+$$f_{extreme} = 3 \left( \frac{13}{12} \right)^2 + 6 \left(\frac{13}{12} \times -\frac{3}{4} \right) + 7 \left( -\frac{3}{4} \right)^2 - 2 \times \frac{13}{12} + 4 \times - \frac{3}{4} = -\frac{31}{12}$$
+
+This local point is a minimum, as
+$$\frac{\partial^2f}{\partial x^2} = 6\ \ \textrm{ \& }\ \ \frac{\partial^2}{\partial y^2} = 14$$
+
+are positive.
+
+
+## Section 13.3, Problem 5
+$$L(x, y, z, \lambda) = 8x^2 + 4yz -16z + 600 - \lambda \left[ 4x^2 + y^2 + 4z^2 - 16 \right]$$
+$$\frac{\partial L}{\partial x} = 16x - 8 \lambda x = 0$$
+$$\frac{\partial L}{\partial y} = 4z - 2 \lambda y = 0$$
+$$\frac{\partial L}{\partial z} = 4y -8 \lambda z - 16 = 0$$
+$$\frac{\partial L}{\partial \lambda} = -4x^2 - y^2 -4z^2 + 16 = 0$$
+
+The first equation can be solved to give $\lambda = 2$.  Substituting this into the second equation gives $y = z$.  Substituting into the third equation:
+$$4y - 8\lambda z - 16 = 0 \longrightarrow 4z - 16z -16 = 0 \longrightarrow y = z = -\frac{4}{3}$$
+Substituting this into the fourth equation:
+$$-4x^2 - y^2 -4z^2 + 16 = 0 \longrightarrow -4x^2 - \frac{16}{9} - 4 \times \frac{16}{9} + 16 = 0 \longrightarrow x = \pm \frac{4}{3}$$
+
+So the two points on the orbit with the highest temperature are $(4/3, -4/3, -4/3)$ and $(-4/3, -4/3, -4/3)$.
+
+
+## Section 13.4, Problem 5
+The number of assumptions listed must be very accurate in order to achieve models precise enough to maintain a stable population.  Precision of these assumptions is difficult, as they are affected by a number of factors that likely vary with time.  Estimation of the population level could be conducted by random sampling -- by conducting a number of samples over a fixed area, a reasonable error can be gained.  If this sampling is conducted regularly, any changes in the measurement can be adjusted as soon as a statistically significant change is observed.
+
+One of the primary disadvantages arising from a varying quota is the impact on the fishing industry -- changes in quota may change the strategies of fishers, and uncertainty may harm their ability to make financial decisions related to their operations.  Another difficulty is the communication of these changing quotas in a timely manner.  This difficulty also highlights a political challenge -- not only must the quotas be communicated, they must be coded into law and then enforced.  The "red tape" and bureaucracy associated with creating legislation will present a signficant challenge.
