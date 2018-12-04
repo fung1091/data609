@@ -1,0 +1,540 @@
+---
+title: "data609project"
+author: "jim lung"
+date: "November 26, 2018"
+output:
+  html_document:
+    highlight: textmate
+    theme: default
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+  html_notebook:
+    highlight: textmate
+    theme: default
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '4'
+  word_document:
+    toc: yes
+    toc_depth: '4'
+subtitle: Portfolio Optimization
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Data 609 Project proposal - Mathematical Modeling Techniques for Data Analytics
+Authors: Jim Lung
+
+## Aim:
+** Use mathematical models to make a decision for portfolio optimization **
+** Investigating portfolio optimization with expected return on investiment in risk control **
+
+## Data source:
+** Historical stock price data are readily accessible using functions in "Quantmod" package **
+** The filtered data for this application selects total 9 stock cases from 2015 to August 2018 **
+** The datasets include the date, daily market close price, market volumes, the closing price will be used to make for portfolio optimization **
+
+In the following sections, we use a variety of mathematical tools to perform the following tasks:  
+* Data loading
+* Graphical Exploration
+* Compute daily, monthly and yearly return
+* Calculate the Mean Variance model by specific stocks
+* Use minimax model to optimize portfolio
+* Use linear programming techniques to compare the log return
+* Use a quadratic programming approach to determine appropriate portfolio weights
+  
+
+### Load Libraries
+```{r}
+suppressMessages(suppressWarnings(library(knitr)))
+suppressMessages(suppressWarnings(library(ggplot2)))
+suppressMessages(suppressWarnings(library(ggthemes)))
+suppressMessages(suppressWarnings(library(dplyr)))
+suppressMessages(suppressWarnings(library(tidyr)))
+suppressMessages(suppressWarnings(library(stringr)))
+suppressMessages(suppressWarnings(library(lpSolveAPI)))
+suppressMessages(suppressWarnings(library(xts)))
+suppressMessages(suppressWarnings(library(matrixcalc)))
+suppressMessages(suppressWarnings(library(dygraphs)))
+suppressMessages(suppressWarnings(library(ggthemes)))
+suppressMessages(suppressWarnings(library(highcharter)))
+suppressMessages(suppressWarnings(library(viridis)))
+suppressMessages(suppressWarnings(library(tibbletime)))
+suppressMessages(suppressWarnings(library(timetk)))
+suppressMessages(suppressWarnings(library(tidyquant)))
+suppressMessages(suppressWarnings(library(tidyverse)))
+```
+
+
+## 1. Data
+
+```{r}
+# input and print available stocks 
+
+symbols <- c("AAPL", "AMD", "ADI",  "ABBV", "AET", "A",  "APD", "AA","CF")
+stock <- c("Apple Inc.", "Advanced Micro Devices, Inc.", "Analog Devices, Inc.", "AbbVie Inc","AETNA INC", "Agilent Technologies Inc","Air Products & Chemicals, Inc.","Alcoa Corp","CF Industries Holdings, Inc.")
+df <- data.frame(ticker=symbols, stocks=stock)
+knitr::kable(df[,1:2], col.names = c("Ticker","Stocks"))  
+```  
+
+Construct a vector of tickers and gather prices for them using the getSymbols function within quantmod. We will next calculate returns and convert the data to a time series object.
+
+```{r}
+
+# The symbols vector holds our tickers. 
+tickers <- c("AAPL", "AMD", "ADI",  "ABBV", "AET", "A",  "APD", "AA","CF")
+# The prices object will hold our raw price data
+close_price<- 
+  getSymbols(tickers,src="yahoo", from = "2017-01-01", 
+             auto.assign = TRUE, warnings = FALSE) %>% 
+  map(~Ad(get(.))) %>%   #Extract (transformed) data from a suitable OHLC object. 
+  reduce(merge) %>%   #reduce() combines from the left, reduce_right() combines from the right
+  `colnames<-`(tickers )
+close_price<-tk_zoo(close_price)%>%na.omit()
+# Calculate returns
+prices <- close_price
+returns.data <- sapply(close_price, CalculateReturns)
+returns.data <- na.omit(returns.data)
+returns.data %>%tk_tbl()%>%tail()
+```
+
+
+```{r}
+x = close_price
+date = index(close_price)
+close_price = data.frame(date,x)
+
+```
+
+### Graphical Exploration 
+Use adjusted closed price to plot graph from 2017 until now:
+
+```{r}
+start="2017-01-01"
+end=today()
+
+dateWindow <-cat(paste(sQuote("2017-01-01"),sQuote(end),sep=","), "\n")
+```
+
+```{r}
+dygraph(close_price, main = "Value", group = "stock") %>%
+  dyRebase(value = 100) %>%
+  dyRangeSelector(dateWindow = dateWindow)
+```
+
+According to the historial price movements, it indicate the future trends and it concern the maximum of expected return, it is difficult to find out any good investment stratege in plot graph. So we should calculate the return by daily, weekly or yearly to decide the short , long term investment.
+
+## 2. Compute daily, monthly and yearly return
+
+```{r}
+#daily return
+daily_return <- as.data.frame(apply(close_price[,-1] , 2 , diff )/close_price[-479,-1])
+daily_return <- cbind(Date = close_price[-1,1],daily_return)
+#monthly returns
+temp <-  lapply(daily_return[,-1], function(x) x+1)
+temp$year <- format(daily_return[,1], "%Y")
+temp$month <- format(daily_return[,1], "%m")
+temp<- as.data.frame(temp)
+monthly_return <- aggregate(temp[-c(10,11)] ,by=list(temp$month,temp$year), FUN = prod, na.rm=TRUE)
+monthly_return <-cbind(monthly_return[,c(1,2)],monthly_return[,-c(1,2)]-1)
+colnames(monthly_return)[1] <-'Month'
+colnames(monthly_return)[2] <-'Year'
+monthly_return$Date <- as.Date(paste0(monthly_return$Year,'-',monthly_return$Month,"-01"))
+monthly_return <- monthly_return[,c(12,1:11)]
+#yearly returns
+annual_return <- aggregate(temp[-c(10,11)] ,list(temp$year), FUN = prod, na.rm=TRUE)
+annual_return <-cbind(annual_return[,1],annual_return[,-1]-1)
+colnames(annual_return)[1] <-'Year'
+#$Year <- as.Date(ISOdate(plot_dt_Y$Year, 1, 1))
+# time period: year
+n <- tail(as.numeric(annual_return$Year), n=1) - as.numeric(as.numeric(annual_return$Year))[1]
+# 5 years average annual return
+ave_annual_return <- apply(annual_return[,-1]+1,2,prod)
+ave_annual_return <- ave_annual_return^(1/n)-1
+```
+
+
+Compare the annual return:
+```{r}
+annualreturn <- as.data.frame(ave_annual_return)
+colnames(annualreturn)<-'ave_yearly_return'
+kable(annualreturn)
+
+```
+To compare the average yearly return, AMD and AET are the most increasing return yearly. 
+
+## 3.Linear Programming - Mean Variance model
+
+Investors are risk averse in that they prefer higher return for a given level of risk (variance, standard deviation), or they want to minimize risk for a given level of returns, so we go to minimize the variance and maximize the return.
+
+Suppose data are observed for N securities, over T time periods. Let
+
+$y_{jt}$ = Return on one dollar invested in security j in time period t.
+
+$\bar{y_j}$=Average Return on security j
+
+$w_j=$ Portfolio allocation to security j.
+
+$y_{pt}$ = Return on portfolio in time period t
+
+$E_p$ =Average Return on portfolio
+
+$M_p$ = Minimum return on portfolio
+
+The objective function: $$min \displaystyle\sum_{j=k}^{N}\displaystyle\sum_{j=1}^{N}w_jw_ks_{jk}$$
+
+subject to: $$\displaystyle\sum_{j=1}^{N}w_j\bar{y_j} \geq G $$  
+
+with: $$s_{jk} = \frac{1}{T-N}\displaystyle\sum_{t=1}^{T}(y_{jt} - \bar{y_j})(y_{kt} -\bar{y_k})$$
+
+
+```{r}
+#The subset of the data as candidate
+sub_return <- monthly_return[,c('Date','Month','Year',tickers)]
+# convert to matrix and vector
+cov_matrix <- cov(sub_return[sub_return$Date > as.Date('2018-01-01'),][,-c(1:3)])
+pstart <- rep(1/12,8)
+# arithmetic mean of monthly return
+mu <- apply(sub_return[sub_return$Date > as.Date('2018-01-01'),][,-c(1:3)],2,mean)
+# standard deviation
+std <- apply(sub_return[sub_return$Date > as.Date('2018-01-01'),][,-c(1:3)],2,sd)
+#sharp ratio
+sharpe <- mu /std
+############################################
+#Minimize the variance
+############################################
+SSRE  <- function(parx) {
+    par<- c(parx,1-sum(parx))
+    if(all(par > 0 & par < 1)) { # parameters meet requirements
+       sqrt(t(par)%*% cov_matrix%*% par) # this is a  linear algebra version of your objective without  the division by xi
+    } else 1e7  # penalty for parameters not satisfying constraints
+}
+SSRE(pstart)
+#par<- c(pstart,1-sum(pstart))
+#vr <- sqrt(t(par)%*% cov_matrix%*% par)
+opt_1 <- optim(pstart,SSRE)
+opt_1
+para <- c(opt_1$par, 1-sum(opt_1$par))  # final contributions
+weight<- as.data.frame(t(round(para,4)))
+colnames(weight)<- tickers
+display <- cbind(t(weight),'Ave.Return'=mu,'Stdev'=std,'Sharp'=sharpe)
+colnames(display)[1]<-'Weight'
+data.frame(display)
+cat('\n','The monthly return of the portfolio at the minimum global variance is:',max_value <-sprintf("%1.3f%%", para%*%mu*100),'\n')
+cat('\n','The minimum global variance is:',min_vr <-opt_1$value,'\n')
+#or
+#opt_1 <-nlminb(pstart, SSRE) 
+############################################
+#Maximize the return
+############################################
+MaxReturn  <- function(parx) {
+    par<- c(parx,1-sum(parx))
+    if(all(par > 0 & par < 1)) { # parameters meet requirements
+       -t(par)%*%mu  # this is a  linear algebra version of your objective without  the division by xi
+    } else 1e7  # penalty for parameters not satisfying constraints
+}
+-MaxReturn (pstart)
+opt_2 <-nlminb(pstart, MaxReturn) 
+opt_2
+para_2 <- c(opt_2$par, 1-sum(opt_2$par))  # final contributions
+weight<- as.data.frame(t(round(para_2,4)))
+colnames(weight)<- tickers
+data.frame('Weight'=t(weight))
+cat('\n','The maximized monthly return of the portfolio is:',max_value <-sprintf("%1.3f%%", -opt_2$objective*100),'\n')
+cat('\n','The global variance is:',vr_mxreturn <- sqrt(t(para_2)%*%cov_matrix%*%para_2),'\n')
+```
+
+The average monthly return of the portofolio at the evenly distributed allocation is 6.8 %. After optimization, the average monthly return of portfolio is -0.436 % when the global variance is at minimum 0.048. The maximized monthly return of portfolio is 1.904 % when the global variance is 0.0915.
+
+## 4.Linear Programming - Minimax Model
+
+The minimax model will maximize return with respect to one of these prior distributions providing valuable insight regarding an investor's risk attitude and decision behavior.
+
+Suppose data are observed for N securities, over T time periods. Let
+
+$y_{jt}$ = Return on one dollar invested in security j in time period t.
+
+$\bar{y_j}$=Average Return on security j
+
+$w_j=$ Portfolio allocation to security j.
+
+$y_{pt}$ = Return on portfolio in time period t
+
+$E_p$ =Average Return on portfolio
+
+$M_p$ = Minimum return on portfolio
+
+The objective function:
+
+$$max\ M_p$$
+
+subject to:
+
+$$\displaystyle\sum_{j=1}^{N}w_jy_{jt} \geq M_p $$   t = 1,...,T
+
+$$\displaystyle\sum_{j=1}^{N}w_j\bar{y_j} \geq G $$
+
+
+```{r}
+#the worst monthly return was calculated by subtract average return by the standard deviation
+worst_return<-mu-std
+#The subset of the data as candidate
+sub_return <- monthly_return[,c('Date','Month','Year',tickers)]
+# convert to matrix and vector for later use
+cov_matrix <- cov(sub_return[sub_return$Date > as.Date('2018-01-01'),][,-c(1:3)])
+pstart <- rep(1/12,8)
+# arithmetic mean of monthly return
+mu <- apply(sub_return[sub_return$Date > as.Date('2018-01-01'),][,-c(1:3)],2,mean)
+# standard deviation
+std <- apply(sub_return[sub_return$Date > as.Date('2018-01-01'),][,-c(1:3)],2,sd)
+#sharp ratio
+sharpe <- mu /std
+worst_return <- mu-std
+############################################
+#Minimize the variance
+############################################
+portfolio_return  <- function(parx) {
+    par<- c(parx,1-sum(parx))
+    if(all(par > 0 & par < 1)) { # parameters meet requirements
+       -par%*%worst_return # this is a  linear algebra version of your objective without  the division by xi
+    } else 1e7  # penalty for parameters not satisfying constraints
+}
+portfolio_return(pstart)
+opt_3 <- optim(pstart, portfolio_return) 
+opt_3
+para_3 <- c(opt_3$par, 1-sum(opt_3$par))  # final contributions
+weight<- as.data.frame(t(round(para_3,4)))
+colnames(weight)<- tickers
+display <- cbind(t(weight),'Worst.Return'=worst_return,'Ave.Return'=mu,'Stdev'=std,'Sharp'=sharpe)
+colnames(display)[1]<-'Weight'
+data.frame(display)
+cat('\n','The average minimum losses is:',min_losses <-sprintf("%1.3f%%", opt_3$value*100,'\n'))
+cat('\n','The variance is:',SSRE(para_3[-12]))
+alocation <- rbind('worst_return'=worst_return,'weight'=weight)
+colnames(alocation) <- tickers
+kable(alocation)
+
+```
+Average monthly return is 8.6%, After optimization, mininum average loss is 6.49 % when variance is 1e+07.
+
+## 5. linear programming vs log returns:
+
+Modeling linear vs log returns:
+Now we are ready to obtain the sample estimates from the returns$\mathbf{x}_t$
+$$
+\begin{align}
+\hat{\boldsymbol{\mu}} & = \frac{1}{T}\sum_{t=1}^T \mathbf{x}_t\\
+\hat{\boldsymbol{\Sigma}} & = \frac{1}{T-1}\sum_{t=1}^T (\mathbf{x}_t - \hat{\boldsymbol{\mu}})(\mathbf{x}_t - \hat{\boldsymbol{\mu}})^T
+\end{align}
+$$
+
+
+Daily rebalancing
+We will start with a daily rebalancing since we already have the daily returns readily available.
+
+
+```{r}
+# compute log-returns and linear returns
+X_log <- CalculateReturns(prices, "log")[-1]
+X_lin <- CalculateReturns(prices)[-1]
+
+N <- ncol(X_log)  # number of stocks
+T <- nrow(X_log)  # number of days
+
+# split data into training and test data
+T_trn <- round(0.7*T)  # 70% of data
+X_log_trn <- X_log[1:T_trn, ]
+X_log_tst <- X_log[(T_trn+1):T, ]
+X_lin_trn <- X_lin[1:T_trn, ]
+X_lin_tst <- X_lin[(T_trn+1):T, ]
+
+
+# Method 1: directly from linear returns
+mu_lin <- colMeans(X_lin_trn)
+X_ <- X_lin_trn - matrix(mu_lin, T_trn, N, byrow = TRUE)  #remove mean
+Sigma_lin <- 1/(T_trn-1) * t(X_) %*% X_
+
+
+# Method 2: directly from log returns
+mu_log <- colMeans(X_log_trn)
+Sigma_log <- cov(X_log_trn)
+
+# Method 3: from log returns plus transformation
+momentsReturnLog2Lin <- function(mu, Sigma) {
+  K <- ncol(Sigma)
+  mu_ <- exp(mu + 0.5*diag(Sigma)) - 1
+  Sigma_ <- matrix(NA, nrow=K, ncol=K)
+  for(ii in 1:K)
+    for(jj in 1:K)
+      Sigma_[ii,jj] <- exp( mu[ii] + mu[jj] + 0.5*(Sigma[ii,ii]+Sigma[jj,jj]) ) * (exp(Sigma[ii,jj])-1)
+  return( list(mu=mu_, Sigma=Sigma_) )
+}
+
+tmp <- momentsReturnLog2Lin(mu_log, Sigma_log)
+mu_log_trans <- tmp$mu
+Sigma_log_trans <- tmp$Sigma
+```
+
+Now let compute the three corresponding GMV portfolios:
+```{r}
+# create function for GMVP
+portolioGMVP <- function(Sigma) {
+  ones <- rep(1, nrow(Sigma))
+  Sigma_inv_1 <- solve(Sigma, ones)  #same as: inv(Sigma) %*% ones
+  w <- (1/as.numeric(ones %*% Sigma_inv_1)) * Sigma_inv_1
+  return(w)
+}
+
+# compute the three versions of GMVP
+w_lin <- portolioGMVP(Sigma_lin)
+w_log <- portolioGMVP(Sigma_log)
+w_log_trans <- portolioGMVP(Sigma_log_trans)
+w_all <- cbind(w_lin, w_log, w_log_trans)
+w_all
+
+# plot to compare the allocations
+barplot(t(w_all), col = c("darkblue","darkcyan", "darkgoldenrod"), legend = colnames(w_all), 
+        main = "Portfolio allocation", xlab = "stocks", ylab = "dollars", beside = TRUE)
+```
+
+By portfolio allocation, AAPL, AET and APD are shown the most positive in investing value, but it is not significate in difference between log and tranformation. 
+
+## 6. Qudratic programming
+
+Modelling portfolio optimization as quadratic program
+
+```{r}
+mu <- colMeans(X_log_trn)
+Sigma <- cov(X_log_trn)
+```
+
+#### Uniform portfolio
+The uniform portfolio allocates equal weight to each stock: $\mathbf{w} = \frac{1}{N}\mathbf{1}$
+
+
+```{r}
+w_unif <- rep(1/N, N)
+
+```
+
+#### GMVP
+The Global Minimum Variance Portfolio (GMVP) is formulated as
+$$ \begin{array}{ll}
+\underset{\mathbf{w}}{\textsf{minimize}} & \mathbf{w}^T\mathbf{\Sigma}\mathbf{w}\\
+{\textsf{subject to}}
+ & \mathbf{1}^T\mathbf{w} = 1\\
+ & \mathbf{w}\ge\mathbf{0}
+\end{array}$$
+We can compute it with a solver (the closed-form solution does not exist for w???0):
+
+```{r}
+library(CVXR)
+
+portolioGMVP <- function(Sigma) {
+  w <- Variable(nrow(Sigma))
+  prob <- Problem(Minimize(quad_form(w, Sigma)), 
+                  constraints = list(w >= 0, sum(w) == 1))
+  result <- solve(prob)
+  return(as.vector(result$getValue(w)))
+}
+
+w_GMVP <- portolioGMVP(Sigma)
+w_GMVP
+```
+
+#### Markowitz portfolio
+The mean-variance Markowitz portfolio with no shorting is formulated as:
+
+$$\begin{array}{ll}
+\underset{\mathbf{w}}{\textsf{maximize}} & \boldsymbol{\mu}^T\mathbf{w} -\lambda\mathbf{w}^T\mathbf{\Sigma}\mathbf{w}\\
+{\textsf{subject to}}
+ & \mathbf{1}^T\mathbf{w} = 1\\
+ & \mathbf{w}\ge\mathbf{0}
+\end{array}$$
+
+
+```{r}
+portolioMarkowitz <- function(mu, Sigma, lmd = 0.5) {
+  w <- Variable(nrow(Sigma))
+  prob <- Problem(Maximize(t(mu) %*% w - lmd*quad_form(w, Sigma)),
+                  constraints = list(w >= 0, sum(w) == 1))
+  result <- solve(prob)
+  return(as.vector(result$getValue(w)))
+}
+
+w_Markowitz <- portolioMarkowitz(mu, Sigma, lmd = 2)
+```
+
+#### Return-risk tradeoff for all portfolios
+We can now compare the allocations of the portfolios:
+
+```{r}
+# put together all portfolios
+w_all <- cbind(w_unif, w_GMVP, w_Markowitz)
+rownames(w_all) <- colnames(X_lin)
+colnames(w_all) <- c("uniform", "GMVP", "Markowitz")
+round(w_all, digits = 2)
+```
+
+```{r}
+barplot(t(w_all),
+        main = "Portfolio allocation", xlab = "stocks", ylab = "dollars", beside = TRUE, 
+        legend = c(colnames(w_all)),
+        col = c("darkblue", "brown", "darkcyan"))
+```
+
+Then we can compare the performance:
+```{r}
+# compute returns of all portfolios
+ret_all <- xts(X_lin %*% w_all, index(X_lin))
+ret_all_trn <- ret_all[1:T_trn, ]
+ret_all_tst <- ret_all[-c(1:T_trn), ]
+
+# performance
+table.AnnualizedReturns(ret_all_trn)
+table.AnnualizedReturns(ret_all_tst)
+```
+
+```{r}
+{ chart.CumReturns(ret_all, main = "Performance of different portfolios", 
+                   wealth.index = TRUE, legend.loc = "topleft", colorset = rich8equal)
+  addEventLines(xts("training", index(X_lin[T_trn])), srt=90, pos=2, lwd = 2, col = "darkblue") }
+```
+
+Finally, we can plot the expected return vs the standard deviation along with the efficient frontier:
+```{r}
+# first, compute the efficient frontier
+w_frontier_trn <- NULL
+lmd_sweep <- exp(seq(-5, 5, by = 0.5))
+for (lmd in lmd_sweep)
+  w_frontier_trn <- cbind(w_frontier_trn, portolioMarkowitz(mu, Sigma, lmd))
+ret_frontier_trn <- xts(X_lin_trn %*% w_frontier_trn, index(X_lin_trn))
+mu_frontier_trn <- table.AnnualizedReturns(ret_frontier_trn)[1, ]
+sd_frontier_trn <- table.AnnualizedReturns(ret_frontier_trn)[2, ]
+
+# plot in-sample sd-mu scatter plot
+#maxSR <- table.AnnualizedReturns(ret_all_trn[, "maxSR"])[3, ]
+chart.RiskReturnScatter(ret_all_trn,
+                        main = "Annualized Return and Risk",
+                        symbolset = c(rep(21, 9), rep(22, 4+3)), 
+                        colorset = c(rep("red", 9), rep("blue", 4), rep("green", 3)),
+                        bg = "black")
+                        #add.sharpe = maxSR)
+lines(sd_frontier_trn, mu_frontier_trn)
+
+```
+
+From the graph of annualized Return and Risk, Markowitz optimization has larger annualized return and risk.
+
+### Conclusion
+We can conclude with the following points:
+
+To compare the average yearly return, AMD and AET are the most increasing return yearly.
+It seems that using linear returns or log-returns does not make any significant difference for daily, weekly, and monthly returns.
+Mean-variance Markowitz portfolio has larger annualized return and risk, and Global Minimum Variance Portfolio (GMVP) has lower annualized return and risk. 
