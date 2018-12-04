@@ -1,5 +1,5 @@
 ---
-title: "data609present"
+title: "Data 609 Final Project"
 author: "jim lung"
 date: "December 4, 2018"
 output:
@@ -32,7 +32,7 @@ suppressMessages(suppressWarnings(library(tidyverse)))
 
 ```
 
-## Data 609 Project proposal - Mathematical Modeling Techniques for Data Analytics
+## Data 609 Final Project - Mathematical Modeling Techniques for Data Analytics
 
 Title: Portfolio Optimization
 
